@@ -1,0 +1,23 @@
+cabal-version: 3.0
+
+name: hyprmoni
+version: 0.1.0.0
+license: MIT
+
+common warnings
+    ghc-options: -Wall -Werror
+
+executable hyprmoni
+    import:
+        warnings
+
+    main-is: Main.hs
+
+    build-depends:
+        base,
+        bytestring,
+        network
+
+    hs-source-dirs: app
+
+    default-language: Haskell2010
