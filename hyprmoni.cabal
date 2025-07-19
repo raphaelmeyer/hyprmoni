@@ -13,10 +13,15 @@ executable hyprmoni
 
     main-is: Main.hs
 
+    other-modules:
+        Json
+
     build-depends:
         base,
         bytestring,
-        network
+        containers,
+        network,
+        text
 
     hs-source-dirs: app
 

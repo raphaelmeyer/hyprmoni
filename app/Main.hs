@@ -3,6 +3,8 @@
 module Main where
 
 import qualified Data.ByteString.Char8 as BS
+import qualified Data.Text as Text
+import qualified Json
 import qualified Network.Socket as Socket
 import qualified Network.Socket.ByteString as Socket
 import qualified System.Environment as System
@@ -23,8 +25,19 @@ allMonitors address = Socket.withSocketsDo $ do
   socket <- Socket.socket Socket.AF_UNIX Socket.Stream 0
   Socket.connect socket address
   Socket.sendAll socket "-j/monitors all"
-  foo <- Socket.recv socket 1024
-  putStrLn $ BS.unpack foo
+  monitors <- recvAll socket
+  putStrLn $ Text.unpack monitors
+  let json = Json.parse monitors
+  print json
 
 buildSocketAddress :: String -> String -> Socket.SockAddr
 buildSocketAddress path signature = Socket.SockAddrUnix $ path ++ "/hypr/" ++ signature ++ "/.socket.sock"
+
+recvAll :: Socket.Socket -> IO Text.Text
+recvAll socket = do
+  content <- Socket.recv socket 1024
+  if BS.null content
+    then pure ""
+    else do
+      remaining <- recvAll socket
+      pure $ Text.append (Text.pack . BS.unpack $ content) remaining
