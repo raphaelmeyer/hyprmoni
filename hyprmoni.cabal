@@ -14,7 +14,8 @@ executable hyprmoni
     main-is: Main.hs
 
     other-modules:
-        Json
+        Json,
+        Monitors
 
     build-depends:
         base,

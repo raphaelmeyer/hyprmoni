@@ -5,6 +5,7 @@ module Main where
 import qualified Data.ByteString.Char8 as BS
 import qualified Data.Text as Text
 import qualified Json
+import qualified Monitors
 import qualified Network.Socket as Socket
 import qualified Network.Socket.ByteString as Socket
 import qualified System.Environment as System
@@ -28,7 +29,7 @@ allMonitors address = Socket.withSocketsDo $ do
   monitors <- recvAll socket
   putStrLn $ Text.unpack monitors
   let json = Json.parse monitors
-  print json
+  print $ Monitors.info json
 
 buildSocketAddress :: String -> String -> Socket.SockAddr
 buildSocketAddress path signature = Socket.SockAddrUnix $ path ++ "/hypr/" ++ signature ++ "/.socket.sock"
