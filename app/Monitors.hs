@@ -6,6 +6,7 @@ import qualified Data.Map as Map
 import qualified Data.Maybe as Maybe
 import qualified Data.Text as Text
 import qualified Json
+import qualified Text.Printf as Printf
 
 data Info = Info
   { name :: Text.Text,
@@ -21,7 +22,8 @@ info _ = []
 monitorInfo :: Json.Json -> Maybe Info
 monitorInfo (Json.Object details) = do
   n <- monitorName details
-  pure $ Info n Text.empty []
+  m <- currentMode details
+  pure $ Info n m []
 monitorInfo _ = Nothing
 
 monitorName :: Json.KeyValues -> Maybe Text.Text
@@ -29,4 +31,12 @@ monitorName details = do
   value <- Map.lookup "name" details
   case value of
     (Json.String n) -> pure n
+    _ -> Nothing
+
+currentMode :: Json.KeyValues -> Maybe Text.Text
+currentMode details = do
+  width <- Map.lookup "width" details
+  height <- Map.lookup "height" details
+  case (width, height) of
+    (Json.Number w, Json.Number h) -> pure . Text.pack $ Printf.printf "%.gx%.g" w h
     _ -> Nothing
