@@ -2,6 +2,7 @@
 
 module Monitors where
 
+import qualified Data.List as List
 import qualified Data.Map as Map
 import qualified Data.Maybe as Maybe
 import qualified Data.Text as Text
@@ -23,7 +24,8 @@ monitorInfo :: Json.Json -> Maybe Info
 monitorInfo (Json.Object details) = do
   n <- monitorName details
   m <- currentMode details
-  pure $ Info n m []
+  let as = availableModes details
+  pure $ Info n m as
 monitorInfo _ = Nothing
 
 monitorName :: Json.KeyValues -> Maybe Text.Text
@@ -40,3 +42,14 @@ currentMode details = do
   case (width, height) of
     (Json.Number w, Json.Number h) -> pure . Text.pack $ Printf.printf "%.gx%.g" w h
     _ -> Nothing
+
+availableModes :: Json.KeyValues -> [Text.Text]
+availableModes details = case Map.lookup "availableModes" details of
+  Just (Json.Array modes) -> List.nub $ Maybe.mapMaybe availableMode modes
+  _ -> []
+
+availableMode :: Json.Json -> Maybe Text.Text
+availableMode (Json.String m) = case Text.split (== '@') m of
+  (wxh : _) -> if Text.null wxh then Nothing else Just wxh
+  _ -> Nothing
+availableMode _ = Nothing

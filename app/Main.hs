@@ -27,7 +27,6 @@ allMonitors address = Socket.withSocketsDo $ do
   Socket.connect socket address
   Socket.sendAll socket "-j/monitors all"
   monitors <- recvAll socket
-  putStrLn $ Text.unpack monitors
   let json = Json.parse monitors
   print $ Monitors.info json
 
