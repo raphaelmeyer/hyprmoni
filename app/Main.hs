@@ -2,6 +2,7 @@
 
 module Main where
 
+import qualified App
 import qualified Data.ByteString.Char8 as BS
 import qualified Data.Text as Text
 import qualified Json
@@ -20,6 +21,8 @@ main = do
     _ -> do
       putStrLn "Hyprland socket not found."
       System.exitFailure
+  --
+  App.run
 
 allMonitors :: Socket.SockAddr -> IO ()
 allMonitors address = Socket.withSocketsDo $ do

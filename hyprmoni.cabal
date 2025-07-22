@@ -14,16 +14,21 @@ executable hyprmoni
     main-is: Main.hs
 
     other-modules:
+        App,
         Json,
         Monitors
 
     build-depends:
         base,
+        brick,
         bytestring,
         containers,
         network,
-        text
+        text,
+        vty
 
     hs-source-dirs: app
+
+    ghc-options: -threaded
 
     default-language: Haskell2010
