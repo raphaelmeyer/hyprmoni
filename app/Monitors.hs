@@ -8,24 +8,18 @@ import qualified Data.Maybe as Maybe
 import qualified Data.Text as Text
 import qualified Json
 import qualified Text.Printf as Printf
+import qualified Types
 
-data Info = Info
-  { name :: Text.Text,
-    mode :: Text.Text,
-    available :: [Text.Text]
-  }
-  deriving (Show)
-
-info :: Json.Json -> [Info]
+info :: Json.Json -> [Types.MonitorInfo]
 info (Json.Array monitors) = Maybe.mapMaybe monitorInfo monitors
 info _ = []
 
-monitorInfo :: Json.Json -> Maybe Info
+monitorInfo :: Json.Json -> Maybe Types.MonitorInfo
 monitorInfo (Json.Object details) = do
   n <- monitorName details
   m <- currentMode details
   let as = availableModes details
-  pure $ Info n m as
+  pure $ Types.MonitorInfo n m as
 monitorInfo _ = Nothing
 
 monitorName :: Json.KeyValues -> Maybe Text.Text

@@ -15,8 +15,10 @@ executable hyprmoni
 
     other-modules:
         App,
+        Hyprland,
         Json,
-        Monitors
+        Monitors,
+        Types
 
     build-depends:
         base,
