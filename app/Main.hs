@@ -10,7 +10,7 @@ main = do
   Exception.handle onError $ do
     monitors <- Hyprland.allMonitors
     print monitors
-    App.run
+    App.run monitors
 
 onError :: Exception.SomeException -> IO a
 onError e = do
