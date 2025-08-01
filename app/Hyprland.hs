@@ -1,8 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Hyprland (allMonitors) where
+module Hyprland (allMonitors, change) where
 
 import qualified Control.Exception as Exception
+import qualified Control.Monad as Monad
 import qualified Data.ByteString.Char8 as BS
 import qualified Data.Text as Text
 import qualified Json
@@ -17,6 +18,16 @@ allMonitors = do
   address <- mkSocketAddress
   response <- makeRequest address "-j/monitors all"
   pure $ Monitors.info . Json.parse $ response
+
+change :: Text.Text -> Text.Text -> IO ()
+change name mode = do
+  address <- mkSocketAddress
+  Monad.void
+    . makeRequest address
+    . BS.pack
+    . Text.unpack
+    . Text.concat
+    $ ["/keyword monitor ", name, ",", mode, ",auto,1"]
 
 mkSocketAddress :: IO Socket.SockAddr
 mkSocketAddress = do

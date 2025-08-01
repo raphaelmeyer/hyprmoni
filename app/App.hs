@@ -9,8 +9,10 @@ import qualified Brick.Types as T
 import qualified Brick.Widgets.Border as Border
 import qualified Brick.Widgets.Center as Center
 import qualified Brick.Widgets.Core as Core
+import qualified Control.Monad.IO.Class as Monad
 import qualified Data.Text as Text
 import qualified Graphics.Vty as Vty
+import qualified Hyprland
 import qualified Types
 
 data Selection = Selection
@@ -155,8 +157,15 @@ handleEvent (T.VtyEvent e) = case e of
   Vty.EvKey Vty.KRight [] -> T.modify monitorNext
   Vty.EvKey Vty.KUp [] -> T.modify modePrevious
   Vty.EvKey Vty.KDown [] -> T.modify modeNext
+  Vty.EvKey Vty.KEnter [] -> changeMode
+  Vty.EvKey (Vty.KChar ' ') [] -> changeMode
   _ -> pure ()
 handleEvent _ = pure ()
+
+changeMode :: T.EventM Name State ()
+changeMode = do
+  s <- T.get
+  Monad.liftIO $ Hyprland.change (selectedMonitor $ sSelected s) (selectedMode $ sSelected s)
 
 aSelected :: Attr.AttrName
 aSelected = Attr.attrName "selected"
