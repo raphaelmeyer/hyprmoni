@@ -14,11 +14,12 @@ executable hyprmoni
     main-is: Main.hs
 
     other-modules:
-        App,
+        Application,
         Hyprland,
         Json,
         Monitors,
-        Types
+        Types,
+        UI
 
     build-depends:
         base,
