@@ -1,5 +1,6 @@
 module Selection
   ( Selection (..),
+    first,
     nextMode,
     nextMonitor,
     previousMode,
@@ -14,6 +15,9 @@ data Selection = Selection
   { selectedMonitor :: Text.Text,
     selectedMode :: Text.Text
   }
+
+first :: [Types.MonitorInfo] -> Selection
+first monitors = Selection (Types.name . head $ monitors) (Types.mode . head $ monitors)
 
 previousMonitor :: [Types.MonitorInfo] -> Selection -> Selection
 previousMonitor (left : right : ms) selection

@@ -37,31 +37,37 @@ draw state =
 drawMonitor :: Selection.Selection -> Types.MonitorInfo -> T.Widget Name
 drawMonitor selection monitor =
   Core.padLeft (Core.Pad 1)
-    . Border.borderWithLabel (drawMonitorBorder selection monitor)
+    . Border.borderWithLabel (drawMonitorBorder monitor selected)
     . Core.vLimit 5
     . Core.hLimit 16
     . Center.center
-    $ drawModes (Selection.selectedMode selection) monitor
+    $ drawModes selection monitor
+  where
+    selected = Selection.selectedMonitor selection == Types.name monitor
 
-drawMonitorBorder :: Selection.Selection -> Types.MonitorInfo -> T.Widget Name
-drawMonitorBorder selection monitor =
-  if Selection.selectedMonitor selection == Types.name monitor
+drawMonitorBorder :: Types.MonitorInfo -> Bool -> T.Widget Name
+drawMonitorBorder monitor selected =
+  if selected
     then Core.withAttr aSelected title
     else title
   where
     title = Core.txt . Types.name $ monitor
 
-drawModes :: Text.Text -> Types.MonitorInfo -> T.Widget Name
-drawModes selected monitor =
+drawModes :: Selection.Selection -> Types.MonitorInfo -> T.Widget Name
+drawModes selection monitor =
   let name = Types.name monitor
       current = Types.mode monitor
       available = Types.available monitor
+      selected =
+        if name == Selection.selectedMonitor selection
+          then Just $ Selection.selectedMode selection
+          else Nothing
    in Core.vBox
         [ Core.vLimit 3 . Core.viewport (Name name) T.Vertical . Core.vBox $
             map (drawMode current selected) available
         ]
 
-drawMode :: Text.Text -> Text.Text -> Text.Text -> T.Widget n
+drawMode :: Text.Text -> Maybe Text.Text -> Text.Text -> T.Widget n
 drawMode current selected mode =
   Core.padRight (Core.Pad 1)
     . Core.padLeft Core.Max
@@ -70,11 +76,13 @@ drawMode current selected mode =
     $ Core.txt mode
   where
     style
-      | mode == selected && mode == current = aSelected <> aCurrent
-      | mode == selected = aSelected
+      | Just mode == selected && mode == current = aSelected <> aCurrent
+      | Just mode == selected = aSelected
       | mode == current = aCurrent
       | otherwise = aDefault
-    visible = if mode == selected then Core.visible else id
+    visible = case selected of
+      Just selectedMode -> if mode == selectedMode then Core.visible else id
+      Nothing -> if mode == current then Core.visible else id
 
 aSelected :: Attr.AttrName
 aSelected = Attr.attrName "selected"

@@ -27,7 +27,7 @@ run monitors = do
   pure ()
 
 initialState :: [Types.MonitorInfo] -> UI.State
-initialState monitors = UI.State monitors (Selection.Selection (Types.name . head $ monitors) (Types.mode . head $ monitors))
+initialState monitors = UI.State monitors (Selection.first monitors)
 
 monitorPrevious :: UI.State -> UI.State
 monitorPrevious (UI.State monitors selection) = UI.State monitors (Selection.previousMonitor monitors selection)
