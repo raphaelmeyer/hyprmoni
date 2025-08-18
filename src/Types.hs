@@ -10,7 +10,7 @@ data MonitorInfo = MonitorInfo
     mode :: Text.Text,
     available :: [Text.Text]
   }
-  deriving (Show)
+  deriving (Eq, Show)
 
 data ApplicationException
   = UndefinedEnvironmentVariable Text.Text

@@ -48,7 +48,8 @@ test-suite test
     main-is: Spec.hs
 
     other-modules:
-        JsonSpec
+        JsonSpec,
+        MonitorsSpec
 
     build-depends:
         hyprland-monitors,

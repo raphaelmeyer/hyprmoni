@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Monitors where
+module Monitors (info) where
 
 import qualified Data.List as List
 import qualified Data.Map as Map
@@ -11,7 +11,7 @@ import qualified Text.Printf as Printf
 import qualified Types
 
 info :: Json.Json -> [Types.MonitorInfo]
-info (Json.Array monitors) = Maybe.mapMaybe monitorInfo monitors
+info (Json.Array monitors) = map sortModes . Maybe.mapMaybe monitorInfo $ monitors
 info _ = []
 
 monitorInfo :: Json.Json -> Maybe Types.MonitorInfo
@@ -47,3 +47,17 @@ availableMode (Json.String m) = case Text.split (== '@') m of
   (wxh : _) -> if Text.null wxh then Nothing else Just wxh
   _ -> Nothing
 availableMode _ = Nothing
+
+sortModes :: Types.MonitorInfo -> Types.MonitorInfo
+sortModes monitor = monitor {Types.available = sorted}
+  where
+    sorted = List.sortBy (flip compareMode) (Types.available monitor)
+
+compareMode :: Text.Text -> Text.Text -> Ordering
+compareMode a b = case compare (head dimA) (head dimB) of
+  EQ -> compare (last dimA) (last dimB)
+  result -> result
+  where
+    dimensions mode = map (read . Text.unpack) . Text.split (== 'x') $ mode :: [Int]
+    dimA = dimensions a
+    dimB = dimensions b
