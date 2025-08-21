@@ -18,31 +18,28 @@ executable hyprmoni
     hs-source-dirs: app
     ghc-options: -threaded
 
-    other-modules:
-        Application,
-        Hyprland,
-        UI
-
     build-depends:
-        hyprland-monitors,
-        brick,
-        bytestring,
-        containers,
-        network,
-        vty
+        hyprland-monitors
 
 library hyprland-monitors
     import: common-properties
     hs-source-dirs: src
 
     exposed-modules:
+        Application,
+        Hyprland,
         Json,
         Monitors,
         Selection,
-        Types
+        Types,
+        UI
 
     build-depends:
+        brick,
+        bytestring,
         containers,
+        network,
+        vty
 
 test-suite test
     import: common-properties
@@ -54,8 +51,8 @@ test-suite test
         JsonSpec
 
     build-depends:
-        hspec,
         hyprland-monitors,
+        hspec,
         containers
 
     build-tool-depends:
