@@ -16,12 +16,12 @@ data Json
   | Boolean Bool
   | Number Double
   | Null
-  deriving (Show)
+  deriving (Eq, Show)
 
-parse :: Text.Text -> Json
+parse :: Text.Text -> Maybe Json
 parse input = case ReadP.readP_to_S json $ Text.unpack input of
-  [(result, _)] -> result
-  _ -> undefined
+  [(result, _)] -> Just result
+  _ -> Nothing
 
 json :: ReadP.ReadP Json
 json =

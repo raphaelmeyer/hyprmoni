@@ -17,7 +17,9 @@ allMonitors :: IO [Types.MonitorInfo]
 allMonitors = do
   address <- mkSocketAddress
   response <- makeRequest address "-j/monitors all"
-  pure $ Monitors.info . Json.parse $ response
+  case Json.parse response of
+    Just info -> pure $ Monitors.info info
+    Nothing -> Exception.throw Types.InvalidJson
 
 change :: Text.Text -> Text.Text -> IO ()
 change name mode = do

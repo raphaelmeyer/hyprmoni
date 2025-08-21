@@ -4,35 +4,59 @@ name: hyprmoni
 version: 0.1.0.0
 license: MIT
 
-common warnings
-    ghc-options: -Wall -Werror
+common common-properties
+    ghc-options:
+        -Wall -Werror
+    default-language: Haskell2010
+    build-depends:
+        base,
+        text
 
 executable hyprmoni
-    import:
-        warnings
-
+    import: common-properties
     main-is: Main.hs
+    hs-source-dirs: app
+    ghc-options: -threaded
 
     other-modules:
         Application,
         Hyprland,
-        Json,
-        Monitors,
-        Selection,
-        Types,
         UI
 
     build-depends:
-        base,
+        hyprland-monitors,
         brick,
         bytestring,
         containers,
         network,
-        text,
         vty
 
-    hs-source-dirs: app
+library hyprland-monitors
+    import: common-properties
+    hs-source-dirs: src
 
-    ghc-options: -threaded
+    exposed-modules:
+        Json,
+        Monitors,
+        Selection,
+        Types
 
-    default-language: Haskell2010
+    build-depends:
+        containers,
+
+test-suite test
+    import: common-properties
+    type: exitcode-stdio-1.0
+    hs-source-dirs: test
+    main-is: Spec.hs
+
+    other-modules:
+        JsonSpec
+
+    build-depends:
+        hspec,
+        hyprland-monitors,
+        containers
+
+    build-tool-depends:
+        hspec-discover:hspec-discover

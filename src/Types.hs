@@ -12,12 +12,16 @@ data MonitorInfo = MonitorInfo
   }
   deriving (Show)
 
-data ApplicationException = UndefinedEnvironmentVariable Text.Text | SocketNotFound
+data ApplicationException
+  = UndefinedEnvironmentVariable Text.Text
+  | SocketNotFound
+  | InvalidJson
 
 instance Show ApplicationException where
   show (UndefinedEnvironmentVariable variable) =
     Text.unpack $
       Text.concat ["Missing environment variable '", variable, "'"]
   show SocketNotFound = "Hyprland IPC socket not found"
+  show InvalidJson = "Could not parse json"
 
 instance Exception.Exception ApplicationException
