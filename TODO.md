@@ -1,5 +1,12 @@
 # TODO
 
+## Next Tasks
+
+- clean up `Application.run`
+- update monitors when resolution changes
+- sort monitors by `x`
+- move monitors left or right
+
 ## Ideas
 
 ### UI

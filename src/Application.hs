@@ -2,16 +2,23 @@
 
 module Application (run) where
 
+import qualified Brick.BChan as BChan
 import qualified Brick.Main as M
 import qualified Brick.Types as T
-import qualified Control.Monad.IO.Class as Monad
+import qualified Control.Concurrent as Concurrent
+import qualified Control.Monad as Monad
+import qualified Control.Monad.IO.Class as MonadIO
+import qualified Data.Text as Text
 import qualified Graphics.Vty as Vty
 import qualified Hyprland
 import qualified Selection
+import qualified System.IO
 import qualified Types
 import qualified UI
 
-mkApp :: M.App UI.State e UI.Name
+data Event = Update
+
+mkApp :: M.App UI.State Event UI.Name
 mkApp =
   M.App
     { M.appDraw = UI.draw,
@@ -21,10 +28,22 @@ mkApp =
       M.appAttrMap = const UI.attributes
     }
 
-run :: [Types.MonitorInfo] -> IO ()
-run monitors = do
-  _ <- M.defaultMain mkApp (initialState monitors)
-  pure ()
+run :: IO ()
+run = do
+  monitors <- Hyprland.allMonitors
+  evChan <- BChan.newBChan 16
+  handle <- Hyprland.listen
+  System.IO.hSetBuffering handle System.IO.LineBuffering
+  listener <- Concurrent.forkIO $ Monad.forever $ do
+    event <- System.IO.hGetLine handle
+    Monad.when (isMonitorEvent . Text.pack $ event) $ BChan.writeBChan evChan Update
+  (_, vty) <- M.customMainWithDefaultVty (Just evChan) mkApp (initialState monitors)
+  Vty.shutdown vty
+  Concurrent.killThread listener
+  System.IO.hClose handle
+
+isMonitorEvent :: Text.Text -> Bool
+isMonitorEvent event = Text.isPrefixOf "monitoradded" event || Text.isPrefixOf "monitorremoved" event
 
 initialState :: [Types.MonitorInfo] -> UI.State
 initialState monitors = UI.State monitors (Selection.first monitors)
@@ -41,7 +60,7 @@ modePrevious (UI.State monitors selection) = UI.State monitors (Selection.previo
 modeNext :: UI.State -> UI.State
 modeNext (UI.State monitors selection) = UI.State monitors (Selection.nextMode monitors selection)
 
-handleEvent :: T.BrickEvent UI.Name e -> T.EventM UI.Name UI.State ()
+handleEvent :: T.BrickEvent UI.Name Event -> T.EventM UI.Name UI.State ()
 handleEvent (T.VtyEvent e) = case e of
   Vty.EvKey Vty.KEsc [] -> M.halt
   Vty.EvKey (Vty.KChar 'q') [] -> M.halt
@@ -52,9 +71,17 @@ handleEvent (T.VtyEvent e) = case e of
   Vty.EvKey Vty.KEnter [] -> changeMode
   Vty.EvKey (Vty.KChar ' ') [] -> changeMode
   _ -> pure ()
+handleEvent (T.AppEvent ev) = case ev of
+  Update -> updateMonitors
 handleEvent _ = pure ()
 
 changeMode :: T.EventM UI.Name UI.State ()
 changeMode = do
   s <- T.get
-  Monad.liftIO $ Hyprland.change (Selection.selectedMonitor $ UI.sSelected s) (Selection.selectedMode $ UI.sSelected s)
+  MonadIO.liftIO $ Hyprland.change (Selection.selectedMonitor $ UI.sSelected s) (Selection.selectedMode $ UI.sSelected s)
+
+updateMonitors :: T.EventM UI.Name UI.State ()
+updateMonitors = do
+  s <- T.get
+  monitors <- MonadIO.liftIO $ Hyprland.allMonitors
+  T.put s {UI.sMonitors = monitors}

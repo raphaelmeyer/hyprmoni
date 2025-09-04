@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Hyprland (allMonitors, change) where
+module Hyprland (allMonitors, change, listen) where
 
 import qualified Control.Exception as Exception
 import qualified Control.Monad as Monad
@@ -11,11 +11,14 @@ import qualified Monitors
 import qualified Network.Socket as Socket
 import qualified Network.Socket.ByteString as Socket
 import qualified System.Environment as System
+import qualified System.IO
 import qualified Types
+
+data Socket = Requests | Events
 
 allMonitors :: IO [Types.MonitorInfo]
 allMonitors = do
-  address <- mkSocketAddress
+  address <- mkSocketAddress Requests
   response <- makeRequest address "-j/monitors all"
   case Json.parse response of
     Just info -> pure $ Monitors.info info
@@ -23,7 +26,7 @@ allMonitors = do
 
 change :: Text.Text -> Text.Text -> IO ()
 change name mode = do
-  address <- mkSocketAddress
+  address <- mkSocketAddress Requests
   Monad.void
     . makeRequest address
     . BS.pack
@@ -31,8 +34,15 @@ change name mode = do
     . Text.concat
     $ ["/keyword monitor ", name, ",", mode, ",auto,1"]
 
-mkSocketAddress :: IO Socket.SockAddr
-mkSocketAddress = do
+listen :: IO System.IO.Handle
+listen = do
+  address <- mkSocketAddress Events
+  socket <- Socket.socket Socket.AF_UNIX Socket.Stream 0
+  Socket.connect socket address
+  Socket.socketToHandle socket System.IO.ReadWriteMode
+
+mkSocketAddress :: Socket -> IO Socket.SockAddr
+mkSocketAddress socket = do
   maybePath <- System.lookupEnv "XDG_RUNTIME_DIR"
   path <- case maybePath of
     Just p -> pure p
@@ -41,7 +51,11 @@ mkSocketAddress = do
   signature <- case maybeSignature of
     Just s -> pure s
     Nothing -> Exception.throw $ Types.UndefinedEnvironmentVariable "HYPRLAND_INSTANCE_SIGNATURE"
-  pure . Socket.SockAddrUnix $ path ++ "/hypr/" ++ signature ++ "/.socket.sock"
+  pure . Socket.SockAddrUnix $ path ++ "/hypr/" ++ signature ++ "/" ++ name
+  where
+    name = case socket of
+      Requests -> ".socket.sock"
+      Events -> ".socket2.sock"
 
 makeRequest :: Socket.SockAddr -> BS.ByteString -> IO Text.Text
 makeRequest address request = Socket.withSocketsDo $ do
