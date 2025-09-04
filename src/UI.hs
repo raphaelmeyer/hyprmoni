@@ -14,7 +14,7 @@ import qualified Selection
 import qualified Types
 
 appTitle :: Text.Text
-appTitle = "hyprmoni"
+appTitle = "<hyprmoni>"
 
 data State = State
   { sMonitors :: [Types.MonitorInfo],
@@ -38,10 +38,12 @@ drawMonitor :: Selection.Selection -> Types.MonitorInfo -> T.Widget Name
 drawMonitor selection monitor =
   Core.padLeft (Core.Pad 1)
     . Border.borderWithLabel (drawMonitorBorder monitor selected)
-    . Core.vLimit 5
     . Core.hLimit 16
-    . Center.center
-    $ drawModes selection monitor
+    . Core.vBox
+    $ [ drawCurrentMode monitor,
+        Border.hBorder,
+        drawModes selection monitor
+      ]
   where
     selected = Selection.selectedMonitor selection == Types.name monitor
 
@@ -51,12 +53,14 @@ drawMonitorBorder monitor selected =
     then Core.withAttr aSelected title
     else title
   where
-    title = Core.txt . Types.name $ monitor
+    title = Core.padLeftRight 1 . Core.txt . Types.name $ monitor
+
+drawCurrentMode :: Types.MonitorInfo -> T.Widget Name
+drawCurrentMode = Core.padTop (Core.Pad 1) . Center.hCenter . Core.txt . Types.mode
 
 drawModes :: Selection.Selection -> Types.MonitorInfo -> T.Widget Name
 drawModes selection monitor =
   let name = Types.name monitor
-      current = Types.mode monitor
       available = Types.available monitor
       selected =
         if name == Selection.selectedMonitor selection
@@ -64,31 +68,22 @@ drawModes selection monitor =
           else Nothing
    in Core.vBox
         [ Core.vLimit 3 . Core.viewport (Name name) T.Vertical . Core.vBox $
-            map (drawMode current selected) available
+            map (drawMode selected) available
         ]
 
-drawMode :: Text.Text -> Maybe Text.Text -> Text.Text -> T.Widget n
-drawMode current selected mode =
+drawMode :: Maybe Text.Text -> Text.Text -> T.Widget n
+drawMode selected mode =
   Core.padRight (Core.Pad 1)
     . Core.padLeft Core.Max
     . Core.withAttr style
     . visible
     $ Core.txt mode
   where
-    style
-      | Just mode == selected && mode == current = aSelected <> aCurrent
-      | Just mode == selected = aSelected
-      | mode == current = aCurrent
-      | otherwise = aDefault
-    visible = case selected of
-      Just selectedMode -> if mode == selectedMode then Core.visible else id
-      Nothing -> if mode == current then Core.visible else id
+    style = if Just mode == selected then aSelected else aDefault
+    visible = if Just mode == selected then Core.visible else id
 
 aSelected :: Attr.AttrName
 aSelected = Attr.attrName "selected"
-
-aCurrent :: Attr.AttrName
-aCurrent = Attr.attrName "current"
 
 aDefault :: Attr.AttrName
 aDefault = Attr.attrName "default"
@@ -97,7 +92,4 @@ attributes :: Attr.AttrMap
 attributes =
   Attr.attrMap
     Vty.defAttr
-    [ (aSelected, Util.fg Vty.cyan),
-      (aCurrent, Util.fg Vty.yellow),
-      (aSelected <> aCurrent, Util.fg Vty.magenta)
-    ]
+    [(aSelected, Util.fg Vty.magenta)]
