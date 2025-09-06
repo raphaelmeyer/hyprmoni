@@ -5,14 +5,12 @@ module Application (run) where
 import qualified Brick.BChan as BChan
 import qualified Brick.Main as M
 import qualified Brick.Types as T
-import qualified Control.Concurrent as Concurrent
 import qualified Control.Monad as Monad
 import qualified Control.Monad.IO.Class as MonadIO
 import qualified Data.Text as Text
 import qualified Graphics.Vty as Vty
 import qualified Hyprland
 import qualified Selection
-import qualified System.IO
 import qualified Types
 import qualified UI
 
@@ -30,20 +28,21 @@ mkApp =
 
 run :: IO ()
 run = do
-  monitors <- Hyprland.allMonitors
   evChan <- BChan.newBChan 16
-  handle <- Hyprland.listen
-  System.IO.hSetBuffering handle System.IO.LineBuffering
-  listener <- Concurrent.forkIO $ Monad.forever $ do
-    event <- System.IO.hGetLine handle
-    Monad.when (isMonitorEvent . Text.pack $ event) $ BChan.writeBChan evChan Update
+  subscription <- Hyprland.subscribe $ onHyprlandEvent evChan
+  monitors <- Hyprland.allMonitors
   (_, vty) <- M.customMainWithDefaultVty (Just evChan) mkApp (initialState monitors)
   Vty.shutdown vty
-  Concurrent.killThread listener
-  System.IO.hClose handle
+  Hyprland.unsubscribe subscription
 
-isMonitorEvent :: Text.Text -> Bool
-isMonitorEvent event = Text.isPrefixOf "monitoradded" event || Text.isPrefixOf "monitorremoved" event
+onHyprlandEvent :: BChan.BChan Event -> Hyprland.Event -> IO ()
+onHyprlandEvent evChan event = do
+  Monad.when (isMonitorEvent event) $ BChan.writeBChan evChan Update
+
+isMonitorEvent :: Hyprland.Event -> Bool
+isMonitorEvent event = any startsWith ["monitoradded", "monitorremoved"]
+  where
+    startsWith prefix = Text.isPrefixOf prefix (Hyprland.evName event)
 
 initialState :: [Types.MonitorInfo] -> UI.State
 initialState monitors = UI.State monitors (Selection.first monitors)
@@ -84,4 +83,4 @@ updateMonitors :: T.EventM UI.Name UI.State ()
 updateMonitors = do
   s <- T.get
   monitors <- MonadIO.liftIO $ Hyprland.allMonitors
-  T.put s {UI.sMonitors = monitors}
+  T.put s {UI.sMonitors = monitors, UI.sSelected = Selection.first monitors}

@@ -1,7 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Hyprland (allMonitors, change, listen) where
+module Hyprland (Event (..), Subscription, allMonitors, change, subscribe, unsubscribe) where
 
+import qualified Control.Concurrent as Concurrent
 import qualified Control.Exception as Exception
 import qualified Control.Monad as Monad
 import qualified Data.ByteString.Char8 as BS
@@ -14,7 +15,17 @@ import qualified System.Environment as System
 import qualified System.IO
 import qualified Types
 
+data Event = Event
+  { evName :: Text.Text,
+    evData :: Text.Text
+  }
+
 data Socket = Requests | Events
+
+data Subscription = Subscription
+  { subHandle :: System.IO.Handle,
+    subTid :: Concurrent.ThreadId
+  }
 
 allMonitors :: IO [Types.MonitorInfo]
 allMonitors = do
@@ -34,12 +45,36 @@ change name mode = do
     . Text.concat
     $ ["/keyword monitor ", name, ",", mode, ",auto,1"]
 
+subscribe :: (Event -> IO ()) -> IO Subscription
+subscribe onEvent = do
+  handle <- listen
+  System.IO.hSetBuffering handle System.IO.LineBuffering
+  tid <- Concurrent.forkIO $ Monad.forever $ do
+    line <- System.IO.hGetLine handle
+    case mkEvent . Text.pack $ line of
+      Just event -> onEvent event
+      Nothing -> pure ()
+  pure $ Subscription handle tid
+
+unsubscribe :: Subscription -> IO ()
+unsubscribe subscription = do
+  Concurrent.killThread . subTid $ subscription
+  System.IO.hClose . subHandle $ subscription
+
 listen :: IO System.IO.Handle
 listen = do
   address <- mkSocketAddress Events
   socket <- Socket.socket Socket.AF_UNIX Socket.Stream 0
   Socket.connect socket address
   Socket.socketToHandle socket System.IO.ReadWriteMode
+
+mkEvent :: Text.Text -> Maybe Event
+mkEvent raw =
+  case split of
+    [name, arguments] -> Just $ Event name arguments
+    _ -> Nothing
+  where
+    split = Text.splitOn ">>" raw
 
 mkSocketAddress :: Socket -> IO Socket.SockAddr
 mkSocketAddress socket = do
