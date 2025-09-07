@@ -78,7 +78,10 @@ handleEvent _ = pure ()
 changeMode :: T.EventM UI.Name UI.State ()
 changeMode = do
   s <- T.get
-  MonadIO.liftIO $ Hyprland.change (Selection.selectedMonitor $ UI.sSelected s) (Selection.selectedMode $ UI.sSelected s)
+  s' <- MonadIO.liftIO $ do
+    Hyprland.change (Selection.selectedMonitor $ UI.sSelected s) (Selection.selectedMode $ UI.sSelected s)
+    resetMonitorInfo
+  T.put s'
 
 updateMonitors :: T.EventM UI.Name UI.State ()
 updateMonitors = do
