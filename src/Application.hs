@@ -11,7 +11,6 @@ import qualified Data.Text as Text
 import qualified Graphics.Vty as Vty
 import qualified Hyprland
 import qualified Selection
-import qualified Types
 import qualified UI
 
 data Event = Update
@@ -30,8 +29,8 @@ run :: IO ()
 run = do
   evChan <- BChan.newBChan 16
   subscription <- Hyprland.subscribe $ onHyprlandEvent evChan
-  monitors <- Hyprland.allMonitors
-  (_, vty) <- M.customMainWithDefaultVty (Just evChan) mkApp (initialState monitors)
+  initialState <- resetMonitorInfo
+  (_, vty) <- M.customMainWithDefaultVty (Just evChan) mkApp initialState
   Vty.shutdown vty
   Hyprland.unsubscribe subscription
 
@@ -44,8 +43,10 @@ isMonitorEvent event = any startsWith ["monitoradded", "monitorremoved"]
   where
     startsWith prefix = Text.isPrefixOf prefix (Hyprland.evName event)
 
-initialState :: [Types.MonitorInfo] -> UI.State
-initialState monitors = UI.State monitors (Selection.first monitors)
+resetMonitorInfo :: IO UI.State
+resetMonitorInfo = do
+  monitors <- Hyprland.allMonitors
+  pure $ UI.State monitors (Selection.first monitors)
 
 monitorPrevious :: UI.State -> UI.State
 monitorPrevious (UI.State monitors selection) = UI.State monitors (Selection.previousMonitor monitors selection)
@@ -81,6 +82,5 @@ changeMode = do
 
 updateMonitors :: T.EventM UI.Name UI.State ()
 updateMonitors = do
-  s <- T.get
-  monitors <- MonadIO.liftIO $ Hyprland.allMonitors
-  T.put s {UI.sMonitors = monitors, UI.sSelected = Selection.first monitors}
+  s <- MonadIO.liftIO resetMonitorInfo
+  T.put s
