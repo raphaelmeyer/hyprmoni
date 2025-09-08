@@ -50,7 +50,8 @@ test-suite test
 
     other-modules:
         JsonSpec,
-        MonitorsSpec
+        MonitorsSpec,
+        SelectionSpec
 
     build-depends:
         hyprland-monitors,

@@ -2,6 +2,7 @@
 
 ## Next Tasks
 
+- selection tests
 - update monitors when resolution changes
 - sort monitors by `x`
 - move monitors left or right
