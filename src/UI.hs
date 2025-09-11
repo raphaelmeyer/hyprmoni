@@ -10,14 +10,14 @@ import qualified Brick.Widgets.Center as Center
 import qualified Brick.Widgets.Core as Core
 import qualified Data.Text as Text
 import qualified Graphics.Vty as Vty
+import qualified Monitor
 import qualified Selection
-import qualified Types
 
 appTitle :: Text.Text
 appTitle = "<hyprmoni>"
 
 data State = State
-  { sMonitors :: [Types.MonitorInfo],
+  { sMonitors :: [Monitor.Info],
     sSelected :: Selection.Selection
   }
 
@@ -34,7 +34,7 @@ draw state =
       ]
   ]
 
-drawMonitor :: Selection.Selection -> Types.MonitorInfo -> T.Widget Name
+drawMonitor :: Selection.Selection -> Monitor.Info -> T.Widget Name
 drawMonitor selection monitor =
   Core.padLeft (Core.Pad 1)
     . Border.borderWithLabel (drawMonitorBorder monitor selected)
@@ -45,23 +45,23 @@ drawMonitor selection monitor =
         drawModes selection monitor
       ]
   where
-    selected = Selection.selectedMonitor selection == Types.name monitor
+    selected = Selection.selectedMonitor selection == Monitor.name monitor
 
-drawMonitorBorder :: Types.MonitorInfo -> Bool -> T.Widget Name
+drawMonitorBorder :: Monitor.Info -> Bool -> T.Widget Name
 drawMonitorBorder monitor selected =
   if selected
     then Core.withAttr aSelected title
     else title
   where
-    title = Core.padLeftRight 1 . Core.txt . Types.name $ monitor
+    title = Core.padLeftRight 1 . Core.txt . Monitor.name $ monitor
 
-drawCurrentMode :: Types.MonitorInfo -> T.Widget Name
-drawCurrentMode = Core.padTop (Core.Pad 1) . Center.hCenter . Core.txt . Types.mode
+drawCurrentMode :: Monitor.Info -> T.Widget Name
+drawCurrentMode = Core.padTop (Core.Pad 1) . Center.hCenter . Core.txt . Monitor.mode
 
-drawModes :: Selection.Selection -> Types.MonitorInfo -> T.Widget Name
+drawModes :: Selection.Selection -> Monitor.Info -> T.Widget Name
 drawModes selection monitor =
-  let name = Types.name monitor
-      available = Types.available monitor
+  let name = Monitor.name monitor
+      available = Monitor.available monitor
       selected =
         if name == Selection.selectedMonitor selection
           then Just $ Selection.selectedMode selection

@@ -29,6 +29,7 @@ library hyprland-monitors
         Application,
         Hyprland,
         Json,
+        Monitor,
         Monitors,
         Selection,
         Types,

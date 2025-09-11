@@ -5,13 +5,6 @@ module Types where
 import qualified Control.Exception as Exception
 import qualified Data.Text as Text
 
-data MonitorInfo = MonitorInfo
-  { name :: Text.Text,
-    mode :: Text.Text,
-    available :: [Text.Text]
-  }
-  deriving (Eq, Show)
-
 data ApplicationException
   = UndefinedEnvironmentVariable Text.Text
   | SocketNotFound

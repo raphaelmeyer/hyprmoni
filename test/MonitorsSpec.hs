@@ -4,9 +4,9 @@ module MonitorsSpec where
 
 import qualified Data.Map.Strict as Map
 import qualified Json
+import qualified Monitor
 import qualified Monitors
 import Test.Hspec
-import qualified Types
 
 someModes :: Json.Json
 someModes =
@@ -76,16 +76,16 @@ spec = do
       length two `shouldBe` 2
 
     it "should contain info for each monitor" $ do
-      let names = map Types.name $ Monitors.info (Json.Array [dp, hdmi, hdmi2])
+      let names = map Monitor.name $ Monitors.info (Json.Array [dp, hdmi, hdmi2])
       names `shouldContain` ["HDMI-1"]
       names `shouldContain` ["HDMI-A-2"]
       names `shouldContain` ["eDP-1"]
 
     it "should return monitor info" $ do
       let info = head $ Monitors.info (Json.Array [hdmi])
-      Types.name info `shouldBe` "HDMI-1"
-      Types.mode info `shouldBe` "1600x900"
-      Types.available info `shouldBe` ["1600x900"]
+      Monitor.name info `shouldBe` "HDMI-1"
+      Monitor.mode info `shouldBe` "1600x900"
+      Monitor.available info `shouldBe` ["1600x900"]
 
   describe "not well defined monitor" $ do
     it "should not return info if a field is missing" $ do
@@ -95,11 +95,11 @@ spec = do
     it "should return any other well defined monitor" $ do
       let info = Monitors.info (Json.Array [missingField, hdmi])
       length info `shouldBe` 1
-      Types.name (head info) `shouldBe` "HDMI-1"
+      Monitor.name (head info) `shouldBe` "HDMI-1"
 
   describe "modes" $ do
     it "should contain list of all available modes" $ do
-      let info = Types.available . head . Monitors.info $ Json.Array [dp]
+      let info = Monitor.available . head . Monitors.info $ Json.Array [dp]
       info `shouldContain` ["1024x768"]
       info `shouldContain` ["1234x567"]
       info `shouldContain` ["1500x1100"]
@@ -107,9 +107,9 @@ spec = do
       info `shouldContain` ["1600x1200"]
 
     it "should contain each resolution only once, ignoring refresh rates" $ do
-      let info = Types.available . head . Monitors.info $ Json.Array [dp]
+      let info = Monitor.available . head . Monitors.info $ Json.Array [dp]
       length info `shouldBe` 5
 
     it "should sort modes by width then by height in descending order" $ do
-      let info = Types.available . head . Monitors.info $ Json.Array [dp]
+      let info = Monitor.available . head . Monitors.info $ Json.Array [dp]
       info `shouldBe` ["1600x1200", "1600x900", "1500x1100", "1234x567", "1024x768"]

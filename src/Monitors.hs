@@ -7,19 +7,19 @@ import qualified Data.Map as Map
 import qualified Data.Maybe as Maybe
 import qualified Data.Text as Text
 import qualified Json
+import qualified Monitor
 import qualified Text.Printf as Printf
-import qualified Types
 
-info :: Json.Json -> [Types.MonitorInfo]
+info :: Json.Json -> [Monitor.Info]
 info (Json.Array monitors) = map sortModes . Maybe.mapMaybe monitorInfo $ monitors
 info _ = []
 
-monitorInfo :: Json.Json -> Maybe Types.MonitorInfo
+monitorInfo :: Json.Json -> Maybe Monitor.Info
 monitorInfo (Json.Object details) = do
   n <- monitorName details
   m <- currentMode details
   let as = availableModes details
-  pure $ Types.MonitorInfo n m as
+  pure $ Monitor.Info n m as
 monitorInfo _ = Nothing
 
 monitorName :: Json.KeyValues -> Maybe Text.Text
@@ -48,10 +48,10 @@ availableMode (Json.String m) = case Text.split (== '@') m of
   _ -> Nothing
 availableMode _ = Nothing
 
-sortModes :: Types.MonitorInfo -> Types.MonitorInfo
-sortModes monitor = monitor {Types.available = sorted}
+sortModes :: Monitor.Info -> Monitor.Info
+sortModes monitor = monitor {Monitor.available = sorted}
   where
-    sorted = List.sortBy (flip compareMode) (Types.available monitor)
+    sorted = List.sortBy (flip compareMode) (Monitor.available monitor)
 
 compareMode :: Text.Text -> Text.Text -> Ordering
 compareMode a b = case compare (head dimA) (head dimB) of

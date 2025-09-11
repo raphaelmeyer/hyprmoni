@@ -8,6 +8,7 @@ import qualified Control.Monad as Monad
 import qualified Data.ByteString.Char8 as BS
 import qualified Data.Text as Text
 import qualified Json
+import qualified Monitor
 import qualified Monitors
 import qualified Network.Socket as Socket
 import qualified Network.Socket.ByteString as Socket
@@ -27,7 +28,7 @@ data Subscription = Subscription
     subTid :: Concurrent.ThreadId
   }
 
-allMonitors :: IO [Types.MonitorInfo]
+allMonitors :: IO [Monitor.Info]
 allMonitors = do
   address <- mkSocketAddress Requests
   response <- makeRequest address "-j/monitors all"
