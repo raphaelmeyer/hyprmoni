@@ -56,7 +56,7 @@ drawMonitorBorder monitor selected =
     title = Core.padLeftRight 1 . Core.txt . Monitor.name $ monitor
 
 drawCurrentMode :: Monitor.Info -> T.Widget Name
-drawCurrentMode = Core.padTop (Core.Pad 1) . Center.hCenter . Core.txt . Monitor.mode
+drawCurrentMode = Core.padTop (Core.Pad 1) . Center.hCenter . Core.str . show . Monitor.mode
 
 drawModes :: Selection.Selection -> Monitor.Info -> T.Widget Name
 drawModes selection monitor =
@@ -71,13 +71,14 @@ drawModes selection monitor =
             map (drawMode selected) available
         ]
 
-drawMode :: Maybe Text.Text -> Text.Text -> T.Widget n
+drawMode :: Maybe Monitor.Mode -> Monitor.Mode -> T.Widget n
 drawMode selected mode =
   Core.padRight (Core.Pad 1)
     . Core.padLeft Core.Max
     . Core.withAttr style
     . visible
-    $ Core.txt mode
+    . Core.str
+    $ show mode
   where
     style = if Just mode == selected then aSelected else aDefault
     visible = if Just mode == selected then Core.visible else id

@@ -12,12 +12,12 @@ someModes :: Json.Json
 someModes =
   Json.Array
     [ Json.String "1600x900@75",
-      Json.String "1024x768@12.3",
+      Json.String "1200x1080@12.3",
       Json.String "1600x900@60",
-      Json.String "1024x768@60.0",
-      Json.String "1234x567@77",
+      Json.String "1200x1080@60.0",
+      Json.String "1200x900@77",
       Json.String "1600x1200@12.5",
-      Json.String "1500x1100@33.3"
+      Json.String "1920x1080@33.3"
     ]
 
 singleMode :: Json.Json
@@ -84,8 +84,8 @@ spec = do
     it "should return monitor info" $ do
       let info = head $ Monitors.info (Json.Array [hdmi])
       Monitor.name info `shouldBe` "HDMI-1"
-      Monitor.mode info `shouldBe` "1600x900"
-      Monitor.available info `shouldBe` ["1600x900"]
+      Monitor.mode info `shouldBe` Monitor.Mode 1600 900
+      Monitor.available info `shouldBe` [Monitor.Mode 1600 900]
 
   describe "not well defined monitor" $ do
     it "should not return info if a field is missing" $ do
@@ -100,11 +100,11 @@ spec = do
   describe "modes" $ do
     it "should contain list of all available modes" $ do
       let info = Monitor.available . head . Monitors.info $ Json.Array [dp]
-      info `shouldContain` ["1024x768"]
-      info `shouldContain` ["1234x567"]
-      info `shouldContain` ["1500x1100"]
-      info `shouldContain` ["1600x900"]
-      info `shouldContain` ["1600x1200"]
+      info `shouldContain` [Monitor.Mode 1200 900]
+      info `shouldContain` [Monitor.Mode 1200 1080]
+      info `shouldContain` [Monitor.Mode 1600 900]
+      info `shouldContain` [Monitor.Mode 1600 1200]
+      info `shouldContain` [Monitor.Mode 1920 1080]
 
     it "should contain each resolution only once, ignoring refresh rates" $ do
       let info = Monitor.available . head . Monitors.info $ Json.Array [dp]
@@ -112,4 +112,10 @@ spec = do
 
     it "should sort modes by width then by height in descending order" $ do
       let info = Monitor.available . head . Monitors.info $ Json.Array [dp]
-      info `shouldBe` ["1600x1200", "1600x900", "1500x1100", "1234x567", "1024x768"]
+      info
+        `shouldBe` [ Monitor.Mode 1920 1080,
+                     Monitor.Mode 1600 1200,
+                     Monitor.Mode 1600 900,
+                     Monitor.Mode 1200 1080,
+                     Monitor.Mode 1200 900
+                   ]

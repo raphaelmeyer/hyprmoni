@@ -36,7 +36,7 @@ allMonitors = do
     Just info -> pure $ Monitors.info info
     Nothing -> Exception.throw Types.InvalidJson
 
-change :: Text.Text -> Text.Text -> IO ()
+change :: Text.Text -> Monitor.Mode -> IO ()
 change name mode = do
   address <- mkSocketAddress Requests
   Monad.void
@@ -44,7 +44,7 @@ change name mode = do
     . BS.pack
     . Text.unpack
     . Text.concat
-    $ ["/keyword monitor ", name, ",", mode, ",auto,1"]
+    $ ["/keyword monitor ", name, ",", Text.pack $ show mode, ",auto,1"]
 
 subscribe :: (Event -> IO ()) -> IO Subscription
 subscribe onEvent = do

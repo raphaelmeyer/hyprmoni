@@ -13,7 +13,7 @@ import qualified Monitor
 
 data Selection = Selection
   { selectedMonitor :: Text.Text,
-    selectedMode :: Text.Text
+    selectedMode :: Monitor.Mode
   }
 
 first :: [Monitor.Info] -> Selection
@@ -38,7 +38,7 @@ previousMode monitors (Selection monitor mode) = Selection monitor previous
     previous = modePrevious' mode available
     available = Monitor.available (monitorByName monitor monitors)
 
-modePrevious' :: Text.Text -> [Text.Text] -> Text.Text
+modePrevious' :: Monitor.Mode -> [Monitor.Mode] -> Monitor.Mode
 modePrevious' mode (top : next : rest)
   | top == mode = mode
   | next == mode = top
@@ -51,7 +51,7 @@ nextMode monitors (Selection monitor mode) = Selection monitor next
     next = modeNext' mode available
     available = Monitor.available (monitorByName monitor monitors)
 
-modeNext' :: Text.Text -> [Text.Text] -> Text.Text
+modeNext' :: Monitor.Mode -> [Monitor.Mode] -> Monitor.Mode
 modeNext' mode (top : next : rest)
   | top == mode = next
   | otherwise = modeNext' mode (next : rest)

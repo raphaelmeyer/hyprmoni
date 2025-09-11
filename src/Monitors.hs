@@ -8,7 +8,6 @@ import qualified Data.Maybe as Maybe
 import qualified Data.Text as Text
 import qualified Json
 import qualified Monitor
-import qualified Text.Printf as Printf
 
 info :: Json.Json -> [Monitor.Info]
 info (Json.Array monitors) = map sortModes . Maybe.mapMaybe monitorInfo $ monitors
@@ -29,35 +28,31 @@ monitorName details = do
     (Json.String n) -> pure n
     _ -> Nothing
 
-currentMode :: Json.KeyValues -> Maybe Text.Text
+currentMode :: Json.KeyValues -> Maybe Monitor.Mode
 currentMode details = do
   width <- Map.lookup "width" details
   height <- Map.lookup "height" details
   case (width, height) of
-    (Json.Number w, Json.Number h) -> pure . Text.pack $ Printf.printf "%.gx%.g" w h
+    (Json.Number w, Json.Number h) -> pure $ Monitor.Mode (truncate w) (truncate h)
     _ -> Nothing
 
-availableModes :: Json.KeyValues -> [Text.Text]
+availableModes :: Json.KeyValues -> [Monitor.Mode]
 availableModes details = case Map.lookup "availableModes" details of
   Just (Json.Array modes) -> List.nub $ Maybe.mapMaybe availableMode modes
   _ -> []
 
-availableMode :: Json.Json -> Maybe Text.Text
+availableMode :: Json.Json -> Maybe Monitor.Mode
 availableMode (Json.String m) = case Text.split (== '@') m of
-  (wxh : _) -> if Text.null wxh then Nothing else Just wxh
+  (wxh : _) ->
+    if Text.null wxh
+      then Nothing
+      else case map (read . Text.unpack) $ Text.split (== 'x') wxh of
+        [w, h] -> Just $ Monitor.Mode w h
+        _ -> Nothing
   _ -> Nothing
 availableMode _ = Nothing
 
 sortModes :: Monitor.Info -> Monitor.Info
 sortModes monitor = monitor {Monitor.available = sorted}
   where
-    sorted = List.sortBy (flip compareMode) (Monitor.available monitor)
-
-compareMode :: Text.Text -> Text.Text -> Ordering
-compareMode a b = case compare (head dimA) (head dimB) of
-  EQ -> compare (last dimA) (last dimB)
-  result -> result
-  where
-    dimensions mode = map (read . Text.unpack) . Text.split (== 'x') $ mode :: [Int]
-    dimA = dimensions a
-    dimB = dimensions b
+    sorted = List.sortBy (flip compare) $ Monitor.available monitor
